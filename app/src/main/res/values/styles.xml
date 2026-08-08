@@ -97,6 +97,7 @@
     </style>
 
     <style name="DnsRw.EditButton" parent="DnsRw.IconButton">
+        <item name="iconSize">22dp</item>
         <item name="iconTint">?attr/colorPrimary</item>
     </style>
 
