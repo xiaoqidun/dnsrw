@@ -330,10 +330,9 @@ public final class MainActivity extends AppCompatActivity {
             return;
         }
 
-        Map<String, String> observations = ObservationStore.load(
-                this,
-                wifi ? ObservationStore.TYPE_WIFI : ObservationStore.TYPE_SIM
-        );
+        Map<String, String> observations = wifi
+                ? Map.of()
+                : ObservationStore.load(this, ObservationStore.TYPE_SIM);
         for (Map.Entry<String, DnsConfig.Rule> entry : rules.entrySet()) {
             String id = entry.getKey();
             String observedLabel = wifi ? id : observations.get(id);

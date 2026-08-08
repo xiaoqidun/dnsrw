@@ -5,7 +5,7 @@
 Android 15+，LSPosed API 102
 
 # 实测机型
-Z80 Ultra（NebulaAIOS2.0.26MR_NX741J）
+努比亚 Z80 Ultra（NebulaAIOS2.0.26MR_NX741J）
 
 # 使用说明
 1. 安装APK，并在LSPosed中启用模块。
