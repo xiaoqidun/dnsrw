@@ -1,0 +1,6 @@
+.idea/
+.vscode/
+.devcontainer/
+.gradle/
+build/
+local.properties
