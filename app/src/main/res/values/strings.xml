@@ -38,8 +38,6 @@
     <string name="select_wireless_network">选择无线网络</string>
     <string name="manual_wireless_network">手动输入网络名称</string>
     <string name="mobile_network">移动网络</string>
-    <string name="iccid">ICCID  %1$s</string>
-    <string name="network_identifier">网络标识  %1$s</string>
     <string name="not_seen_now">当前未检测到</string>
     <string-array name="rule_modes">
         <item>不更改</item>

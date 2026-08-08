@@ -322,7 +322,7 @@ public final class MainActivity extends AppCompatActivity {
     private void renderRuleGroup(
             LinearLayout container,
             Map<String, DnsConfig.Rule> rules,
-        boolean wifi
+            boolean wifi
     ) {
         container.removeAllViews();
         container.setVisibility(rules.isEmpty() ? View.GONE : View.VISIBLE);
@@ -337,7 +337,6 @@ public final class MainActivity extends AppCompatActivity {
         for (Map.Entry<String, DnsConfig.Rule> entry : rules.entrySet()) {
             String id = entry.getKey();
             String observedLabel = wifi ? id : observations.get(id);
-            boolean identityObserved = observedLabel != null;
             String label = observedLabel;
             if (label == null) {
                 label = getString(R.string.mobile_network)
@@ -348,8 +347,7 @@ public final class MainActivity extends AppCompatActivity {
                     id,
                     label,
                     entry.getValue(),
-                    wifi,
-                    identityObserved
+                    wifi
             ));
         }
     }
@@ -359,8 +357,7 @@ public final class MainActivity extends AppCompatActivity {
             String id,
             String label,
             DnsConfig.Rule rule,
-            boolean wifi,
-            boolean identityObserved
+            boolean wifi
     ) {
         View card = getLayoutInflater().inflate(R.layout.rule_card, parent, false);
         TextView title = card.findViewById(R.id.rule_title);
@@ -376,18 +373,15 @@ public final class MainActivity extends AppCompatActivity {
         MaterialButton delete = card.findViewById(R.id.rule_delete);
         delete.setOnClickListener(view -> confirmDelete(id, label, wifi));
 
+        TextView summary = card.findViewById(R.id.rule_summary);
+        summary.setText(ruleSummary(rule));
+
         TextView identity = card.findViewById(R.id.rule_identity);
         if (!wifi) {
-            identity.setText(getString(
-                    identityObserved ? R.string.iccid : R.string.network_identifier,
-                    id
-            ));
+            identity.setText(id);
             identity.setTextIsSelectable(true);
             identity.setVisibility(View.VISIBLE);
         }
-
-        TextView summary = card.findViewById(R.id.rule_summary);
-        summary.setText(ruleSummary(rule));
         return card;
     }
 
