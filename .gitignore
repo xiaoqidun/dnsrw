@@ -3,4 +3,5 @@
 .devcontainer/
 .gradle/
 build/
+device/
 local.properties
