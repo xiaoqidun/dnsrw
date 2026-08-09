@@ -16,6 +16,9 @@
 
 package me.aite.dnsrw;
 
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.TypefaceSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -104,7 +107,7 @@ final class RuleAdapter extends RecyclerView.Adapter<RuleAdapter.RuleHolder> {
     @Override
     public void onBindViewHolder(@NonNull RuleHolder holder, int position) {
         Item item = items.get(position);
-        holder.title.setText(item.label());
+        holder.title.setText(wifi ? item.label() : formatMobileLabel(item.label()));
         holder.edit.setOnClickListener(view -> edit.accept(item));
         holder.delete.setOnClickListener(view -> delete.accept(item));
         holder.itemView.setOnLongClickListener(view -> {
@@ -131,6 +134,29 @@ final class RuleAdapter extends RecyclerView.Adapter<RuleAdapter.RuleHolder> {
     @Override
     public int getItemCount() {
         return items.size();
+    }
+
+    static CharSequence formatMobileLabel(String label) {
+        int slotStart = label.indexOf("卡槽 ");
+        if (slotStart < 0) {
+            return label;
+        }
+        int numberStart = slotStart + 3;
+        int numberEnd = numberStart;
+        while (numberEnd < label.length() && Character.isDigit(label.charAt(numberEnd))) {
+            numberEnd++;
+        }
+        if (numberStart == numberEnd) {
+            return label;
+        }
+        SpannableString text = new SpannableString(label);
+        text.setSpan(
+                new TypefaceSpan("sans-serif-monospace"),
+                numberStart,
+                numberEnd,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        );
+        return text;
     }
 
     static final class RuleHolder extends RecyclerView.ViewHolder {

@@ -496,10 +496,7 @@ public final class MainActivity extends AppCompatActivity {
 
         new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.select_sim)
-                .setAdapter(createAdapter(
-                        android.R.layout.simple_list_item_1,
-                        labels
-                ), (dialog, which) -> showRuleDialog(
+                .setAdapter(createMobileNetworkAdapter(labels), (dialog, which) -> showRuleDialog(
                         false,
                         ids.get(which),
                         seenSims.get(ids.get(which))
@@ -583,7 +580,7 @@ public final class MainActivity extends AppCompatActivity {
                 ? getString(R.string.wifi_rules_title)
                 : label;
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle(title)
+                .setTitle(wifi ? title : RuleAdapter.formatMobileLabel(title))
                 .setView(content)
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.save, null)
@@ -651,10 +648,23 @@ public final class MainActivity extends AppCompatActivity {
         return adapter;
     }
 
+    private ArrayAdapter<String> createMobileNetworkAdapter(String[] values) {
+        return new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, values) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView view = (TextView) super.getView(position, convertView, parent);
+                view.setText(RuleAdapter.formatMobileLabel(values[position]));
+                return view;
+            }
+        };
+    }
+
     private void confirmDelete(String id, String label, boolean wifi) {
         new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.delete_title)
-                .setMessage(getString(R.string.delete_message, label))
+                .setMessage(wifi
+                        ? getString(R.string.delete_message, label)
+                        : RuleAdapter.formatMobileLabel(getString(R.string.delete_message, label)))
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.delete, (dialog, which) -> {
                     if (!captureDefaults()) {
