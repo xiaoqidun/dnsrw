@@ -27,8 +27,8 @@ android {
         applicationId = "me.aite.dnsrw"
         minSdk = 35
         targetSdk = 37
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
     }
 
     androidResources {
@@ -71,7 +71,9 @@ android {
 dependencies {
     compileOnly("io.github.libxposed:api:102.0.0")
     implementation("io.github.libxposed:service:102.0.0")
-    implementation("androidx.concurrent:concurrent-futures:1.3.0")
+    implementation("androidx.recyclerview:recyclerview:1.4.0") {
+        exclude(group = "androidx.profileinstaller", module = "profileinstaller")
+    }
     implementation("com.google.android.material:material:1.14.0") {
         exclude(group = "androidx.profileinstaller", module = "profileinstaller")
     }

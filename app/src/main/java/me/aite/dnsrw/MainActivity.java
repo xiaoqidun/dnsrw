@@ -35,6 +35,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -91,8 +94,12 @@ public final class MainActivity extends AppCompatActivity {
     private MaterialButton aboutButton;
     private MaterialButton addWifiRule;
     private MaterialButton addSimRule;
-    private LinearLayout wifiRules;
-    private LinearLayout simRules;
+    private RecyclerView wifiRules;
+    private RecyclerView simRules;
+    private RuleAdapter wifiRuleAdapter;
+    private RuleAdapter simRuleAdapter;
+    private ItemTouchHelper wifiRuleTouchHelper;
+    private ItemTouchHelper simRuleTouchHelper;
 
     private SharedPreferences remotePreferences;
     private DnsConfig configuration = DnsConfig.empty();
@@ -118,6 +125,21 @@ public final class MainActivity extends AppCompatActivity {
         addSimRule = findViewById(R.id.add_sim_rule);
         wifiRules = findViewById(R.id.wifi_rules);
         simRules = findViewById(R.id.sim_rules);
+
+        wifiRuleAdapter = new RuleAdapter(
+                true,
+                item -> showWifiRuleDialog(item.id()),
+                item -> confirmDelete(item.id(), item.label(), true),
+                holder -> wifiRuleTouchHelper.startDrag(holder)
+        );
+        simRuleAdapter = new RuleAdapter(
+                false,
+                item -> showRuleDialog(false, item.id(), item.label()),
+                item -> confirmDelete(item.id(), item.label(), false),
+                holder -> simRuleTouchHelper.startDrag(holder)
+        );
+        wifiRuleTouchHelper = attachRuleTouchHelper(wifiRules, wifiRuleAdapter, true);
+        simRuleTouchHelper = attachRuleTouchHelper(simRules, simRuleAdapter, false);
 
         saveDefaults.setOnClickListener(view -> {
             if (captureDefaults()) {
@@ -315,82 +337,95 @@ public final class MainActivity extends AppCompatActivity {
     }
 
     private void renderRules() {
-        renderRuleGroup(wifiRules, configuration.wifiRules(), true);
-        renderRuleGroup(simRules, configuration.simRules(), false);
+        renderRuleGroup(wifiRules, wifiRuleAdapter, configuration.wifiRules(), true);
+        renderRuleGroup(simRules, simRuleAdapter, configuration.simRules(), false);
     }
 
     private void renderRuleGroup(
-            LinearLayout container,
+            RecyclerView container,
+            RuleAdapter adapter,
             Map<String, DnsConfig.Rule> rules,
             boolean wifi
     ) {
-        container.removeAllViews();
         container.setVisibility(rules.isEmpty() ? View.GONE : View.VISIBLE);
-        if (rules.isEmpty()) {
-            return;
-        }
-
         Map<String, String> observations = wifi
                 ? Map.of()
                 : ObservationStore.load(this, ObservationStore.TYPE_SIM);
+        ArrayList<RuleAdapter.Item> items = new ArrayList<>(rules.size());
         for (Map.Entry<String, DnsConfig.Rule> entry : rules.entrySet()) {
             String id = entry.getKey();
             String observedLabel = wifi ? id : observations.get(id);
             String label = observedLabel;
             if (label == null) {
-                label = getString(R.string.mobile_network)
-                        + " · " + getString(R.string.not_seen_now);
+                label = getString(R.string.sim_unavailable);
             }
-            container.addView(createRuleCard(
-                    container,
+            items.add(new RuleAdapter.Item(
                     id,
                     label,
-                    entry.getValue(),
-                    wifi
+                    entry.getValue()
             ));
         }
+        adapter.setItems(items);
     }
 
-    private View createRuleCard(
-            ViewGroup parent,
-            String id,
-            String label,
-            DnsConfig.Rule rule,
+    private ItemTouchHelper attachRuleTouchHelper(
+            RecyclerView list,
+            RuleAdapter adapter,
             boolean wifi
     ) {
-        View card = getLayoutInflater().inflate(R.layout.rule_card, parent, false);
-        TextView title = card.findViewById(R.id.rule_title);
-        title.setText(label);
-        MaterialButton edit = card.findViewById(R.id.rule_edit);
-        edit.setOnClickListener(view -> {
-            if (wifi) {
-                showWifiRuleDialog(id);
-            } else {
-                showRuleDialog(false, id, label);
+        list.setLayoutManager(new LinearLayoutManager(this));
+        list.setAdapter(adapter);
+        ItemTouchHelper helper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(
+                ItemTouchHelper.UP | ItemTouchHelper.DOWN,
+                0
+        ) {
+            @Override
+            public boolean onMove(
+                    RecyclerView recyclerView,
+                    RecyclerView.ViewHolder source,
+                    RecyclerView.ViewHolder target
+            ) {
+                return adapter.move(
+                        source.getBindingAdapterPosition(),
+                        target.getBindingAdapterPosition()
+                );
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+            }
+
+            @Override
+            public boolean isLongPressDragEnabled() {
+                return false;
+            }
+
+            @Override
+            public void clearView(
+                    RecyclerView recyclerView,
+                    RecyclerView.ViewHolder viewHolder
+            ) {
+                super.clearView(recyclerView, viewHolder);
+                if (adapter.consumeOrderChanged()) {
+                    saveRuleOrder(adapter, wifi);
+                }
             }
         });
-        MaterialButton delete = card.findViewById(R.id.rule_delete);
-        delete.setOnClickListener(view -> confirmDelete(id, label, wifi));
-
-        TextView summary = card.findViewById(R.id.rule_summary);
-        summary.setText(ruleSummary(rule));
-
-        TextView identity = card.findViewById(R.id.rule_identity);
-        if (!wifi) {
-            identity.setText(id);
-            identity.setTextIsSelectable(true);
-            identity.setVisibility(View.VISIBLE);
-        }
-        return card;
+        helper.attachToRecyclerView(list);
+        return helper;
     }
 
-    private String ruleSummary(DnsConfig.Rule rule) {
-        String[] modes = getResources().getStringArray(R.array.rule_modes);
-        String summary = modes[rule.mode().ordinal()];
-        if (rule.mode() == DnsConfig.Mode.CUSTOM) {
-            summary += "\n" + DnsAddressParser.format(rule.customDns());
+    private void saveRuleOrder(RuleAdapter adapter, boolean wifi) {
+        if (!captureDefaults()) {
+            renderRules();
+            return;
         }
-        return summary;
+        if (wifi) {
+            configuration.reorderWifiRules(adapter.orderedIds());
+        } else {
+            configuration.reorderSimRules(adapter.orderedIds());
+        }
+        saveConfiguration();
     }
 
     private void showWifiRuleDialog(String originalId) {

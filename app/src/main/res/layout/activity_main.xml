@@ -277,12 +277,12 @@
                 app:icon="@drawable/ic_add_24" />
         </LinearLayout>
 
-        <LinearLayout
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/wifi_rules"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="vertical" />
+            android:nestedScrollingEnabled="false" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -319,11 +319,11 @@
                 app:icon="@drawable/ic_add_24" />
         </LinearLayout>
 
-        <LinearLayout
+        <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/sim_rules"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:orientation="vertical" />
+            android:nestedScrollingEnabled="false" />
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -119,12 +119,20 @@ public final class DnsConfig {
         wifiRules.remove(ssid);
     }
 
+    public void reorderWifiRules(List<String> ids) {
+        reorderRules(wifiRules, ids);
+    }
+
     public void putSimRule(String simId, Rule rule) {
         simRules.put(simId, rule);
     }
 
     public void removeSimRule(String simId) {
         simRules.remove(simId);
+    }
+
+    public void reorderSimRules(List<String> ids) {
+        reorderRules(simRules, ids);
     }
 
     public List<String> resolve(NetworkKind kind, String identity) {
@@ -197,5 +205,17 @@ public final class DnsConfig {
             array.put(item);
         }
         return array;
+    }
+
+    private static void reorderRules(
+            LinkedHashMap<String, Rule> rules,
+            List<String> ids
+    ) {
+        LinkedHashMap<String, Rule> ordered = new LinkedHashMap<>();
+        for (String id : ids) {
+            ordered.put(id, rules.get(id));
+        }
+        rules.clear();
+        rules.putAll(ordered);
     }
 }
